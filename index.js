@@ -52,7 +52,7 @@ bot.on('channel_post', async (ctx) => {
     try {
         const post = ctx.channelPost;
 
-        const link = `<a href="${CHANNEL_LINK}">`${LINK_TEXT}`</a>`;
+        const link = `<a href="${CHANNEL_LINK}">`${LINK_TEXT}</a>`;
 
         // 📸 ФОТО / АЛЬБОМ
         if (post.photo) {
