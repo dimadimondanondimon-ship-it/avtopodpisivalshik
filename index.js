@@ -108,7 +108,7 @@ bot.on('channel_post', async (ctx) => {
             return;
         }
 
-        const link = <a href="${CHANNEL_LINK}">${LINK_TEXT}</a>;
+        const link = `<a href="${CHANNEL_LINK}">${LINK_TEXT}</a>`;
 
         // 📸 ОДНО ФОТО
         if (post.photo) {
@@ -116,7 +116,7 @@ bot.on('channel_post', async (ctx) => {
             let caption = '';
 
             if (enableDate) {
-                caption += ${getTomorrowDate()}\n\n;
+                caption += `${getTomorrowDate()}\n\n`;
             }
 
             if (enableLink) {
