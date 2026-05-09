@@ -3,7 +3,7 @@ const { Telegraf, Markup } = require('telegraf');
 // 🔥 токен Render
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-// настройки (по умолчанию включены)
+// настройки
 let enableDate = true;
 let enableLink = true;
 
@@ -22,49 +22,48 @@ function getTomorrowDate() {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
 
-    return ${day}.${month};
+    return `${day}.${month}`;
 }
 
-// 📌 МЕНЮ /mod
+// /mod меню
 bot.command('mod', async (ctx) => {
     await ctx.reply(
         '⚙️ Панель управления',
         Markup.inlineKeyboard([
-            [Markup.button.callback(Дата: ${enableDate ? 'ВКЛ' : 'ВЫКЛ'}, 'toggle_date')],
-            [Markup.button.callback(Ссылка: ${enableLink ? 'ВКЛ' : 'ВЫКЛ'}, 'toggle_link')]
+            [Markup.button.callback(`Дата: ${enableDate ? 'ВКЛ' : 'ВЫКЛ'}`, 'toggle_date')],
+            [Markup.button.callback(`Ссылка: ${enableLink ? 'ВКЛ' : 'ВЫКЛ'}`, 'toggle_link')]
         ])
     );
 });
 
-// 🔘 кнопки
+// кнопки
 bot.action('toggle_date', async (ctx) => {
     enableDate = !enableDate;
-    await ctx.answerCbQuery(Дата: ${enableDate ? 'включена' : 'выключена'});
+    await ctx.answerCbQuery(`Дата: ${enableDate ? 'включена' : 'выключена'}`);
 });
 
 bot.action('toggle_link', async (ctx) => {
     enableLink = !enableLink;
-    await ctx.answerCbQuery(Ссылка: ${enableLink ? 'включена' : 'выключена'});
+    await ctx.answerCbQuery(`Ссылка: ${enableLink ? 'включена' : 'выключена'}`);
 });
 
-// 📢 обработка постов
+// обработка постов
 bot.on('channel_post', async (ctx) => {
     try {
         const post = ctx.channelPost;
 
-        const link = <a href="${CHANNEL_LINK}">${LINK_TEXT}</a>;
+        const link = `<a href="${CHANNEL_LINK}">${LINK_TEXT}</a>`;
 
-        // caption для фото
         if (post.photo) {
 
             let newCaption = '';
 
             if (enableDate) {
-                newCaption += ${getTomorrowDate()}\n\n;
+                newCaption += `${getTomorrowDate()}\n\n`;
             }
 
             if (enableLink) {
-                newCaption += ${link};
+                newCaption += `${link}`;
             }
 
             await ctx.telegram.editMessageCaption(
@@ -76,19 +75,18 @@ bot.on('channel_post', async (ctx) => {
             );
         }
 
-        // текстовые посты
         else if (post.text) {
 
             let newText = '';
 
             if (enableDate) {
-                newText += ${getTomorrowDate()}\n\n;
+                newText += `${getTomorrowDate()}\n\n`;
             }
 
-            newText += ${post.text}\n\n;
+            newText += `${post.text}\n\n`;
 
             if (enableLink) {
-                newText += ${link};
+                newText += `${link}`;
             }
 
             await ctx.telegram.editMessageText(
