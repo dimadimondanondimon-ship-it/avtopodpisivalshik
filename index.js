@@ -1,7 +1,11 @@
-const { Telegraf } = require('telegraf');
+const { Telegraf, Markup } = require('telegraf');
 
-// 🔥 ВСТАВЬ СЮДА ТОКЕН
+// 🔥 токен Render
 const bot = new Telegraf(process.env.BOT_TOKEN);
+
+// настройки (по умолчанию включены)
+let enableDate = true;
+let enableLink = true;
 
 // Ссылка
 const CHANNEL_LINK = 'https://t.me/skkdirjdjdk';
@@ -18,22 +22,50 @@ function getTomorrowDate() {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
 
-    return `${day}.${month}`;
+    return ${day}.${month};
 }
 
-// Отслеживаем посты в канале
+// 📌 МЕНЮ /mod
+bot.command('mod', async (ctx) => {
+    await ctx.reply(
+        '⚙️ Панель управления',
+        Markup.inlineKeyboard([
+            [Markup.button.callback(Дата: ${enableDate ? 'ВКЛ' : 'ВЫКЛ'}, 'toggle_date')],
+            [Markup.button.callback(Ссылка: ${enableLink ? 'ВКЛ' : 'ВЫКЛ'}, 'toggle_link')]
+        ])
+    );
+});
+
+// 🔘 кнопки
+bot.action('toggle_date', async (ctx) => {
+    enableDate = !enableDate;
+    await ctx.answerCbQuery(Дата: ${enableDate ? 'включена' : 'выключена'});
+});
+
+bot.action('toggle_link', async (ctx) => {
+    enableLink = !enableLink;
+    await ctx.answerCbQuery(Ссылка: ${enableLink ? 'включена' : 'выключена'});
+});
+
+// 📢 обработка постов
 bot.on('channel_post', async (ctx) => {
     try {
         const post = ctx.channelPost;
 
-        const link = `<a href="${CHANNEL_LINK}">${LINK_TEXT}</a>`;
+        const link = <a href="${CHANNEL_LINK}">${LINK_TEXT}</a>;
 
+        // caption для фото
         if (post.photo) {
 
-            const newCaption =
-`${getTomorrowDate()}
+            let newCaption = '';
 
-${link}`;
+            if (enableDate) {
+                newCaption += ${getTomorrowDate()}\n\n;
+            }
+
+            if (enableLink) {
+                newCaption += ${link};
+            }
 
             await ctx.telegram.editMessageCaption(
                 post.chat.id,
@@ -44,12 +76,20 @@ ${link}`;
             );
         }
 
+        // текстовые посты
         else if (post.text) {
 
-            const newText =
-`${post.text}
+            let newText = '';
 
-${link}`;
+            if (enableDate) {
+                newText += ${getTomorrowDate()}\n\n;
+            }
+
+            newText += ${post.text}\n\n;
+
+            if (enableLink) {
+                newText += ${link};
+            }
 
             await ctx.telegram.editMessageText(
                 post.chat.id,
@@ -65,4 +105,5 @@ ${link}`;
     }
 });
 
+// запуск
 bot.launch();
