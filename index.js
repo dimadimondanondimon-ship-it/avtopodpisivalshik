@@ -1,22 +1,21 @@
 const { Telegraf, Markup } = require('telegraf');
 
-// 🔥 токен Render
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
 // настройки
 let enableDate = true;
 let enableLink = true;
 
+// кеш для альбомов
+const albums = new Map();
+
 // Ссылка
 const CHANNEL_LINK = 'https://t.me/skkdirjdjdk';
-
-// Текст ссылки
 const LINK_TEXT = '7 школа - подписаться';
 
-// Формат даты +1 день
+// дата +1 день
 function getTomorrowDate() {
     const date = new Date();
-
     date.setDate(date.getDate() + 1);
 
     const day = String(date.getDate()).padStart(2, '0');
@@ -25,7 +24,7 @@ function getTomorrowDate() {
     return `${day}.${month}`;
 }
 
-// /mod меню
+// меню
 bot.command('mod', async (ctx) => {
     await ctx.reply(
         '⚙️ Панель управления',
@@ -47,60 +46,17 @@ bot.action('toggle_link', async (ctx) => {
     await ctx.answerCbQuery(`Ссылка: ${enableLink ? 'включена' : 'выключена'}`);
 });
 
-// обработка постов
+// обработка канал постов
 bot.on('channel_post', async (ctx) => {
     try {
         const post = ctx.channelPost;
-
         const link = `<a href="${CHANNEL_LINK}">${LINK_TEXT}</a>`;
 
-        // 📸 ФОТО / АЛЬБОМ
-        if (post.photo) {
+        // 📸 АЛЬБОМ (2+ фото)
+        if (post.media_group_id) {
 
-            let newCaption = '';
-
-            // ✅ дата ТОЛЬКО для фото
-            if (enableDate) {
-                newCaption += `${getTomorrowDate()}\n\n`;
+            if (!albums.has(post.media_group_id)) {
+                albums.set(post.media_group_id, []);
             }
 
-            if (enableLink) {
-                newCaption += link;
-            }
-
-            await ctx.telegram.editMessageCaption(
-                post.chat.id,
-                post.message_id,
-                undefined,
-                newCaption,
-                { parse_mode: 'HTML' }
-            );
-        }
-
-        // 📝 ТЕКСТ
-        else if (post.text) {
-
-            let newText = post.text + '\n\n';
-
-            // ❌ ВАЖНО: дата УБРАНА полностью из текста
-
-            if (enableLink) {
-                newText += link;
-            }
-
-            await ctx.telegram.editMessageText(
-                post.chat.id,
-                post.message_id,
-                undefined,
-                newText,
-                { parse_mode: 'HTML' }
-            );
-        }
-
-    } catch (error) {
-        console.log(error);
-    }
-});
-
-// запуск
-bot.launch();
+            albums.get(post.media_group_id).push(post
