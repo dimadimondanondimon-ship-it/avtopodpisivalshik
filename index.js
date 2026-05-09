@@ -6,10 +6,11 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 let enableDate = true;
 let enableLink = true;
 
-// кеш для альбомов
+// кеш альбомов
 const albums = new Map();
+const albumTimers = new Map();
 
-// Ссылка
+// ссылка
 const CHANNEL_LINK = 'https://t.me/skkdirjdjdk';
 const LINK_TEXT = '7 школа - подписаться';
 
@@ -24,13 +25,41 @@ function getTomorrowDate() {
     return `${day}.${month}`;
 }
 
+// сборка альбома
+function processAlbum(groupId, ctx) {
+    const group = albums.get(groupId);
+    if (!group || group.length === 0) return;
+
+    const first = group[0];
+
+    const link = `<a href="${CHANNEL_LINK}">${LINK_TEXT}</a>`;
+
+    let caption = '';
+
+    if (enableDate) {
+        caption += `${getTomorrowDate()}\n\n`;
+    }
+
+    if (enableLink) {
+        caption += link;
+    }
+
+    ctx.telegram.editMessageCaption(
+        first.chat.id,
+        first.message_id,
+        undefined,
+        caption,
+        { parse_mode: 'HTML' }
+    ).catch(() => {});
+}
+
 // меню
 bot.command('mod', async (ctx) => {
     await ctx.reply(
         '⚙️ Панель управления',
         Markup.inlineKeyboard([
-            [Markup.button.callback(`Дата: ${enableDate ? 'ВКЛ' : 'ВЫКЛ'}`, 'toggle_date')],
-            [Markup.button.callback(`Ссылка: ${enableLink ? 'ВКЛ' : 'ВЫКЛ'}`, 'toggle_link')]
+            [Markup.button.callback`(Дата: ${enableDate ? 'ВКЛ' : 'ВЫКЛ'}`, 'toggle_date')],
+            [Markup.button.callback`(Ссылка: ${enableLink ? 'ВКЛ' : 'ВЫКЛ'}`, 'toggle_link')]
         ])
     );
 });
@@ -46,17 +75,84 @@ bot.action('toggle_link', async (ctx) => {
     await ctx.answerCbQuery(`Ссылка: ${enableLink ? 'включена' : 'выключена'}`);
 });
 
-// обработка канал постов
+// обработка постов
 bot.on('channel_post', async (ctx) => {
     try {
         const post = ctx.channelPost;
-        const link = `<a href="${CHANNEL_LINK}">${LINK_TEXT}</a>`;
 
         // 📸 АЛЬБОМ (2+ фото)
         if (post.media_group_id) {
 
-            if (!albums.has(post.media_group_id)) {
-                albums.set(post.media_group_id, []);
+            const groupId = post.media_group_id;
+
+            if (!albums.has(groupId)) {
+                albums.set(groupId, []);
             }
 
-            albums.get(post.media_group_id).push(post
+            albums.get(groupId).push(post);
+
+            // сбрасываем старый таймер
+            if (albumTimers.has(groupId)) {
+                clearTimeout(albumTimers.get(groupId));
+            }
+
+            // ждём окончания альбома
+            albumTimers.set(groupId, setTimeout(() => {
+                processAlbum(groupId, ctx);
+
+                albums.delete(groupId);
+                albumTimers.delete(groupId);
+
+            }, 1200));
+
+            return;
+        }
+
+        const link = <a href="${CHANNEL_LINK}">${LINK_TEXT}</a>;
+
+        // 📸 ОДНО ФОТО
+        if (post.photo) {
+
+            let caption = '';
+
+            if (enableDate) {
+                caption += ${getTomorrowDate()}\n\n;
+            }
+
+            if (enableLink) {
+                caption += link;
+            }
+
+            await ctx.telegram.editMessageCaption(
+                post.chat.id,
+                post.message_id,
+                undefined,
+                caption,
+                { parse_mode: 'HTML' }
+            );
+        }
+
+        // 📝 ТЕКСТ
+        else if (post.text) {
+
+            let text = post.text + '\n\n';
+
+            if (enableLink) {
+                text += link;
+            }
+
+            await ctx.telegram.editMessageText(
+                post.chat.id,
+                post.message_id,
+                undefined,
+                text,
+                { parse_mode: 'HTML' }
+            );
+        }
+
+    } catch (err) {
+        console.log(err);
+    }
+});
+
+bot.launch();
