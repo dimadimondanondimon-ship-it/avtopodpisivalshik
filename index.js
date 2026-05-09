@@ -58,8 +58,8 @@ bot.command('mod', async (ctx) => {
     await ctx.reply(
         '⚙️ Панель управления',
         Markup.inlineKeyboard([
-            [Markup.button.callback`(Дата: ${enableDate ? 'ВКЛ' : 'ВЫКЛ'}`, 'toggle_date')],
-            [Markup.button.callback`(Ссылка: ${enableLink ? 'ВКЛ' : 'ВЫКЛ'}`, 'toggle_link')]
+            [Markup.button.callback(`Дата: ${enableDate ? 'ВКЛ' : 'ВЫКЛ'}`, 'toggle_date')],
+            [Markup.button.callback(`Ссылка: ${enableLink ? 'ВКЛ' : 'ВЫКЛ'}`, 'toggle_link')]
         ])
     );
 });
