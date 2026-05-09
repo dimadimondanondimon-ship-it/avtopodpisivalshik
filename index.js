@@ -52,18 +52,20 @@ bot.on('channel_post', async (ctx) => {
     try {
         const post = ctx.channelPost;
 
-        const link = `<a href="${CHANNEL_LINK}">${LINK_TEXT}</a>`;
+        const link = `<a href="${CHANNEL_LINK}">`${LINK_TEXT}`</a>`;
 
+        // 📸 ФОТО / АЛЬБОМ
         if (post.photo) {
 
             let newCaption = '';
 
+            // ✅ дата ТОЛЬКО для фото
             if (enableDate) {
                 newCaption += `${getTomorrowDate()}\n\n`;
             }
 
             if (enableLink) {
-                newCaption += `${link}`;
+                newCaption += link;
             }
 
             await ctx.telegram.editMessageCaption(
@@ -75,18 +77,15 @@ bot.on('channel_post', async (ctx) => {
             );
         }
 
+        // 📝 ТЕКСТ
         else if (post.text) {
 
-            let newText = '';
+            let newText = post.text + '\n\n';
 
-            if (enableDate) {
-                newText += `${getTomorrowDate()}\n\n`;
-            }
-
-            newText += `${post.text}\n\n`;
+            // ❌ ВАЖНО: дата УБРАНА полностью из текста
 
             if (enableLink) {
-                newText += `${link}`;
+                newText += link;
             }
 
             await ctx.telegram.editMessageText(
